@@ -10,6 +10,7 @@ use App\Models\Empresas\Articulos;
 use App\Models\Empresas\Clientes;
 use App\OpcionPago;
 use App\TarjetaPago;
+use Facade\FlareClient\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Http\Request;
@@ -46,6 +47,7 @@ class VentasController extends Controller
         //  //$databaseName = DB::connection('tenant')->getPdo()->query('SELECT DATABASE()')->fetchColumn();
         //  //$tables = DB::connection('tenant')->getPdo()->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
         //  $tables = DB::connection('tenant')->select('SELECT * FROM clientes' );
+        
         return view('Comercio.Ventas.ventas');
     }
 
@@ -78,9 +80,9 @@ class VentasController extends Controller
      */
     public function obtenertabla(Request $request)
     {
-        $dato=$request->articulo;
+        $dato=$request->valorSeleccionado;
         $tabladato= Articulos::with('marcas','tipo_iva')->where ('nombre',$dato)->first();
-        Log::info('Valor seleccionado: ' .$tabladato);
+        Log::info('Valor seleccionado del input: ' .$tabladato);
         if($tabladato){
             return response()->json([
                 'id' => $tabladato->id,
@@ -129,18 +131,22 @@ class VentasController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show()
+    public function show(Request $request)
     {
         $model = FormasPago::all();
+        $texto=trim($request->get('subclientesearch'));
+        $modelosub=Clientes::where('nombre','LIKE','%'.$texto.'%')->paginate(5);
+        Log::info('Valor de la busqueda: ' .$texto);
         return view('Comercio.Ventas.ventas', compact('model'));
+        // return view('Comercio.Ventas.ventas', compact('model','modelosub','texto'));
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
+  
+
+    
+
     public function obtenerValorSeleccionado(Request $request)
     {
         $formaSeleccionada = $request->input('forma');
@@ -162,23 +168,52 @@ class VentasController extends Controller
     }
 
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-   
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+    public function datosposibles(Request $request){
+        if ($request->ajax() ){
+            $data=Articulos::where('nombre','LIKE',$request->tablainput.'%')->get();
+             $salida='';
+             if(count($data)>0){
+                $salida='<ul class="list-group" style="display:block; position:relative; z-index: index 1;" >';
+                foreach($data as $row){
+                    $salida.='<li class="list-group-item" >'.$row->nombre.'</li>';
+                }
+             }else{
+                $salida.='<li class="list-group-item">No existe resultados</li>';
+             }
+             return $salida;
+        }
     }
+
+   public function store(){
+    // dd($_POST['articulo']);
+      /*  $datos=$_POST['articulo'];*/
+   }
+
+   public function search(Request $request)
+	{
+		if($request->ajax())
+		{
+
+			$res="";
+            $texto=$request->search;
+            $modelosub=Clientes::where('nombre','LIKE','%'.$texto.'%')->paginate(5);
+			        Log::info('Pase por ahi: ' .$texto);
+			if($modelosub)
+			{
+				foreach($modelosub as $subcli)
+				{
+					 $res .= '<tr>'.
+                     '<td class="subcliente-name">'.$subcli->nombre.'</td>'.
+                     '<td>'.$subcli->documento.'</td>'.
+                     '<td>'.$subcli->telefono1.'</td>'.
+                     '<td><button type="button" class="select-button" style="border-radius: 25px"><i class="fa-solid fa-check" style="color: #b0da16;"></i></button></td>'.
+                     '</tr>';
+
+				}
+				
+				return $res;
+			}
+		}
+	}
+    
 }
