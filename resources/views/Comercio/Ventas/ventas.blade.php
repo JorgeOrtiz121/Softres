@@ -9,7 +9,7 @@
       min-width: 400px;
     }
     .table-primary thead th {
-        background-color:#17a2b8;
+        background-color:#140a4d;
         text-align: left;
     }
     .table-primary th,
@@ -67,7 +67,7 @@ background: transparent;
 
 .cbp-mc-form input,
 .cbp-mc-form textarea {
-border: 3px solid #fff;
+border: 3px solid #0A274E;
 }
 
 .cbp-mc-form textarea {
@@ -145,26 +145,29 @@ width: 100%;
 padding: 10px;
 }
 }
+th{
+    color: yellow;
+}
 
 </style>
 <!--Esto es el formulario del cliente-->
-<form  class="cbp-mc-form" method="POST" action={{route('store.ventas')}}>
+<form  class="cbp-mc-form"  >
     @csrf
     <div class="cbp-mc-column">
     <label for="cedula">Cedula/RUC </label>
-    <input type="text" id="cedula" name="cedula" class="autocompletar" placeholder="CI o RUC" >
+    <input type="text" id="cedula" name="cedula" class="autocompletar" placeholder="CI o RUC">
     <label for="nombre">Cliente</label>
-    <input type="text" id="nombre" name="nombre" placeholder="Introduzca su nombre" >
+    <input type="text" id="nombre" name="nombre" placeholder="Introduzca su nombre" readonly>
     <label for="email">Email</label>
-    <input type="text" id="email" name="email" placeholder="jon@doe.com">
+    <input type="text" id="email" name="email" placeholder="jon@doe.com" readonly>
     <label for="direccion">Dirreccion</label>
-    <input type="text" id="direccion" name="direccion" placeholder="Direcion de su domicilio">  
+    <input type="text" id="direccion" name="direccion" placeholder="Direcion de su domicilio" readonly>  
   <label for="desc">Descuento</label>
-  <input type="text" id="desc" name="desc" placeholder="0">  
+  <input type="text" id="desc" name="desc" placeholder="0" readonly>  
   <label for="ptos">Ptos Acumulados</label>
-  <input type="text" id="ptos" name="ptos" placeholder="0">  
+  <input type="text" id="ptos" name="ptos" placeholder="0" readonly>  
   <label for="deuda">Deuda</label>
-  <input type="text" id="deuda" name="deuda" placeholder="0">  
+  <input type="text" id="deuda" name="deuda" placeholder="0" readonly>  
     </div>
     <!--Este sera el formulario de pago-->
 <div class="cbp-mc-column">
@@ -232,33 +235,67 @@ padding: 10px;
             <th scope="col">IVA</th>
             <th scope="col">Total</th>
             <th scope="col">Stock</th>
+            <th scope="col">Accion</th>
           </tr>
     </thead>
     <tbody>
         <tr class="fila-ejemplo">
             <td id="numserie" scope="row"></td>
             <td id="codart" scope="row"></td>
-            <td id="nombrecod" scope="row"><input class="articuloInput" id="articuloInput" type="text"></td>
-            <td id="cantidad" scope="row"><input type="text"></td>
+            <td id="nombrecod" scope="row"><input class="articuloInput" id="articuloInput" type="text" name="articuloInput"><div class="product_list" id="product_list"></div></td>
+            <td id="cantidad" scope="row"><input type="number"></td>
             <td id="caja" scope="row"></td>
             <td id="punit" scope="row"></td>
             <td id="descu" scope="row"></td>
             <td id="iva" scope="row"></td>
             <td id="total" scope="row"></td>
             <td id="stock" scope="row"></td>
+            <td>
+                <button class="eliminar-fila">Eliminar</button>
+            </td>
 
            
           </tr>
     </tbody>
 
 </table>
-
+<div class="cbp-mc-column">
+    <label for="subcliente">Subcliente</label>
+    <input type="text" class="subcli" id="subcli" name="subcli" placeholder="Ingrese el subcliente" readonly>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        Visualizar Subcliente
+      </button>
+    <label for="comentario">Comentario</label>
+    <textarea name="comentario" id="comentario" cols="30" rows="10">Ingrese su Comentario</textarea>
+</div>
+<div class="cbp-mc-column">
+    <label for="tipdoc">Tipo Documento</label>
+    <select name="tipdoc" id="tipdoc">
+        <option value="">Factura</option>
+    </select>
+    <label for="numdoc">Numero de Documento</label>
+    <select name="numdoc" id="numdoc">
+        <option value="">001-004</option>
+    </select>
+    <label for="autoriza">Autoriza SRI:</label>
+    <input type="text" >
+</div>
+<div class="cbp-mc-column">
+    <label for="totalcobrar">Total a Cobrar</label>
+   <input type="text" id="totalCobrar" readonly>
+    <label for="valiva">Valor IVA</label>
+    <input type="text" readonly>
+    <label for="valice">Valor ICE</label>
+    <input type="text" readonly >
+</div>
+<!--Esto es el Modal-->
+  <!-- Modal -->
+  @include('Comercio.Ventas.modalclientes')
     </form>
-
-<!--Esto es la tabla de los artculos de ventas-->
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!--Datos de Tabla-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 <script>
     $(document).ready(function () {
         $('.autocompletar').on('input', function () {
@@ -367,61 +404,151 @@ padding: 10px;
                     }
                 });
             });
-            </script> 
-<script > 
-    
-    $(document).ready(function () {
-                // Manejar el evento de entrada en los inputs de artículo
-                $(document).on('input', '.articuloInput', function () {
-                    var articulo = $(this).val();
-                    var filaActual = $(this).closest('tr');
-                    var proximaFila = filaActual.next();
-    
-                    // Realizar una solicitud AJAX al servidor para obtener los datos del artículo
-                    $.ajax({
-                        url: '/obtener-datosde-tabla', // Reemplaza esto con la URL de tu controlador
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            articulo: articulo
-                        },
-                        success: function (response) {
-                            if (response && response.codigo) {
-                                // Rellenar los campos de la fila actual con los datos del artículo
-                                filaActual.find('#numserie').text(response.id);
-                                filaActual.find('#codart').text(response.codigo);
-                                filaActual.find('#punit').text(response.precio_compra_sin_iva);
-                                filaActual.find('#total').text(response.id_iva);
-                                filaActual.find('#stock').text(response.stock_actual);
-                            } else {
-                                // Limpia los campos de la fila actual si no se encontraron datos
-                                filaActual.find('#numserie').text('');
-                                filaActual.find('#codart').text('');
-                                filaActual.find('#punit').text('');
-                                filaActual.find('#total').text('');
-                                filaActual.find('#stock').text('');
-                            }
-    
-                          // Verificar si ya existe una fila vacía al final de la tabla
-                    var filas = $('#miTabla tbody tr');
-                    var ultimaFila = filas[filas.length - 1];
-                    var inputUltimaFila = $(ultimaFila).find('.articuloInput');
-    
-                    // Crear una nueva fila solo si la última fila no está vacía
-                    if (articulo.trim() !== '' && inputUltimaFila.val() !== '') {
-                        var newRow = filaActual.clone(true); // Clonar la fila actual y sus eventos
-                        newRow.find('.articuloInput').val(''); // Limpiar el input del nuevo artículo
-                        $('#miTabla tbody').append(newRow); // Agregar la nueva fila a la tabla
-                    }
-                        },
-                        error: function () {
-                            // Manejo de errores si es necesario
-                        }
-                    });
-                });
+    </script> 
+
+
+   <script>
+$(document).ready(function() {
+
+    $('#miTabla').on('keydown', '.articuloInput', function(e) {
+        // Si se presiona "Enter", prevenir el comportamiento predeterminado
+        if (e.keyCode === 13) {
+            e.preventDefault();
+
+            // Puedes agregar aquí la lógica que deseas realizar al presionar "Enter" en el input
+            // Por ejemplo, puedes enfocar el siguiente input, hacer una acción específica, etc.
+        }
+    });
+
+
+    $('#miTabla').on('keyup', '.articuloInput', function() {
+        var tablainput = $(this).val();
+        var product_list = $(this).siblings('.product_list');
+
+        $.ajax({
+            url: '/obtenerdatosposibles',
+            method: 'GET',
+            data: {
+                _token: '{{ csrf_token() }}',
+                tablainput: tablainput
+            },
+            success: function(data) {
+                product_list.html(data);
+            },
+            error: function() {
+                // Manejar errores si es necesario
+            }
+        });
+    });
+
+
+    $('#miTabla').on('click', '.eliminar-fila', function() {
+        // Elimina la fila actual cuando se hace clic en el botón "Eliminar"
+        $(this).closest('tr').remove();
+    });
+
+
+    $('#miTabla').on('click', 'li', function() {
+        var value = $(this).text();
+        var input = $(this).closest('tr').find('.articuloInput');
+        input.val(value);
+        var product_list = input.siblings('.product_list');
+        product_list.html("");
+
+        $.ajax({
+            url: '/obtener-datosde-tabla',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                valorSeleccionado: value
+            },
+            success: function(response) {
+                var filaActual = input.closest('tr');
+                filaActual.find('#numserie').text(response.id);
+                filaActual.find('#codart').text(response.codigo);
+                filaActual.find('#punit').text(response.precio_compra_sin_iva);
+                filaActual.find('#total').text(response.id_iva);
+                filaActual.find('#stock').text(response.stock_actual);
+
+                // Crear una nueva fila al final de la tabla
+                var newRow = filaActual.clone(true); // Clonar la fila actual y sus eventos
+                newRow.find('#articuloInput').val(''); // Limpiar el input del nuevo artículo
+                newRow.find('#numserie').text(''); // Limpiar los datos de la nueva fila
+                newRow.find('#codart').text('');
+                newRow.find('#punit').text('');
+                newRow.find('#total').text('');
+                newRow.find('#stock').text('');
+                $('#miTabla tbody').append(newRow); // Agregar la nueva fila a la tabla
+            },
+            error: function(error) {
+                // Manejar errores si es necesario
+            }
+        });
+    });
+});
+   </script>
+
+  
+   <script>
+    // script-global.js
+$(document).ready(function() {
+    // Manejar el evento de teclado global
+    $(document).on('keydown', function(e) {
+        // Si se presiona "Enter" en cualquier elemento de formulario, prevenir el comportamiento predeterminado
+        if (e.keyCode === 13 && $(e.target).is(':input')) {
+            e.preventDefault();
+        }
+    });
+});
+
+   </script>
+
+   <script>
+    	$('#search').on('keyup',function(){
+				search_value=$(this).val();
+				//alert(search_value);
+				$.ajax({
+					type:'GET',
+					url: '/search',
+					data: {'search': search_value},
+					success:function(data){
+						$('#searcli').html(data);
+					},
+					error: function(err){
+						console.log('Error'+err);
+					}
+				});
+			});
+            $('#subclienteTableContainer').on('click', '.select-button', function () {
+            var selectedName = $(this).closest('tr').find('.subcliente-name').text();
+
+              $('#subcli').val(selectedName);
+    });
+
+   </script>
+
+<script>
+    $(document).ready(function() {
+        // Escucha el evento 'input' en los inputs de cantidad
+        $('#miTabla').on('input', 'input[type="number"]', function() {
+            // Actualiza dinámicamente la etiqueta de "Total" y el campo "Total a Cobrar"
+            actualizarTotales();
+        });
+
+        // Función para actualizar dinámicamente la etiqueta de "Total" y el campo "Total a Cobrar"
+        function actualizarTotales() {
+            var totalSuma = 0;
+            $('#miTabla tbody tr').each(function() {
+                var cantidad = parseFloat($(this).find('#cantidad input').val()) || 0;
+                var punit = parseFloat($(this).find('#punit').text()) || 0;
+                var total = cantidad * punit;
+                $(this).find('#total').text(total.toFixed(2));
+                totalSuma += total;
             });
 
-    </script>
-
-   
+            // Muestra la suma en el input con id 'totalCobrar'
+            $('#totalCobrar').val(totalSuma.toFixed(2));
+        }
+    });
+</script>
 @endsection()
