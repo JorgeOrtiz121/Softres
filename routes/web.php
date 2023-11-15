@@ -137,6 +137,8 @@ Route::post('/obtener-valor-seleccionado', [VentasController::class,'obtenerValo
 Route::post('/obtener-tipo-tarjeta', [VentasController::class,'tipotarjeta'])->name('obtener.tarjetas');
 Route::post('/obtener-datosde-tabla', [VentasController::class,'obtenertabla'])->name('autocomplete');
 Route::get('/obtenerdatosposibles', [VentasController::class,'datosposibles'])->name('datosposibles');
+Route::post('/obtenerautorizacion', [VentasController::class,'autoridadSRI'])->name('autoridadsri');
+Route::post('/obtenerpdftabla', [VentasController::class,'generarPDF'])->name('generarpdf.pdf');
 
 
 

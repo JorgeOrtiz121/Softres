@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Comercio\Ventas;
 
+use App\Autorizacion;
 use App\FormasPago;
 use App\Http\Controllers\Controller;
 use App\Models\Dashboard\Empresas as DashboardEmpresas;
@@ -9,7 +10,9 @@ use App\Models\Dashboard\UsuariosEmpresas;
 use App\Models\Empresas\Articulos;
 use App\Models\Empresas\Clientes;
 use App\OpcionPago;
+use App\PuntosE;
 use App\TarjetaPago;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Facade\FlareClient\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
@@ -64,7 +67,10 @@ class VentasController extends Controller
             return response()->json([
                 'nombre' => $cliente->nombre,
                 'email' => $cliente->email1,
-                'direccion' => $cliente->direccion
+                'direccion' => $cliente->direccion,
+                'puntos'=> $cliente->puntos,
+                'deuda'=> $cliente->deuda,
+                'favor'=> $cliente->afavor
             ]);
         } else {
             return response()->json(['error' => 'Cliente no encontrado']);
@@ -82,13 +88,13 @@ class VentasController extends Controller
     {
         $dato=$request->valorSeleccionado;
         $tabladato= Articulos::with('marcas','tipo_iva')->where ('nombre',$dato)->first();
-        Log::info('Valor seleccionado del input: ' .$tabladato);
+        Log::info('Valor seleccionado del input de la tabla: ' .$tabladato);
         if($tabladato){
             return response()->json([
                 'id' => $tabladato->id,
                 'codigo' => $tabladato->codigo,
                 'precio_compra_sin_iva' => $tabladato->precio_compra_sin_iva,
-                'id_iva'=> $tabladato->id_iva,
+                'id_iva'=> $tabladato->tipo_iva->pluck('porcentaje'),
                 'precio_compra_sin_iva'=>$tabladato->precio_compra_sin_iva,
                 'stock_actual'=>$tabladato->stock_actual,
             
@@ -134,11 +140,8 @@ class VentasController extends Controller
     public function show(Request $request)
     {
         $model = FormasPago::all();
-        $texto=trim($request->get('subclientesearch'));
-        $modelosub=Clientes::where('nombre','LIKE','%'.$texto.'%')->paginate(5);
-        Log::info('Valor de la busqueda: ' .$texto);
-        return view('Comercio.Ventas.ventas', compact('model'));
-        // return view('Comercio.Ventas.ventas', compact('model','modelosub','texto'));
+        $emision=PuntosE::all();
+        return view('Comercio.Ventas.ventas', compact('model','emision'));
 
     }
 
@@ -197,7 +200,6 @@ class VentasController extends Controller
 			$res="";
             $texto=$request->search;
             $modelosub=Clientes::where('nombre','LIKE','%'.$texto.'%')->paginate(5);
-			        Log::info('Pase por ahi: ' .$texto);
 			if($modelosub)
 			{
 				foreach($modelosub as $subcli)
@@ -215,5 +217,35 @@ class VentasController extends Controller
 			}
 		}
 	}
+
+     public function autoridadSRI(Request $request){
+        $formaSeleccionada = $request->numdoc;
+        Log::info('Pase por ahi111: ' .$formaSeleccionada);
+        $emision = PuntosE::with('opcionemisions')->where('emision', $formaSeleccionada)->first();
+        Log::info('Pase por ahi: ' .$emision);
+        
+        if ($emision) {
+            $opcionEmisions = $emision->opcionemisions; // Obtener la relación
+            $autorizaciones = $opcionEmisions->pluck('autorizacion');
+            Log::info('Pase por ahi: ' .$autorizaciones);
+            return response()->json(['opciones' => $autorizaciones]);
+        } else {
+            return response()->json(['opciones' => []]);
+        }
+
+     }
+
+
+     public function generarPDF(Request $request){
+        $datosTablaDinamica = json_decode($request->input('datos'), true);
+        $datosTablaDinamica2 = json_decode($request->input('datosAdicionales'), true);
+        Log::info('Pase por ahi: form ' .json_encode($datosTablaDinamica));
+        Log::info('Pase por ahi: form1 ' .json_encode($datosTablaDinamica2));
+        $data=Clientes::all();
+        $numeroAcc='25515111111561515116511111';
+        $pdf = Pdf::loadView('Comercio.Ventas.subcliente_table', compact('data','numeroAcc'));
+        return $pdf->stream();
+        //  return $pdf->download('invoice.pdf');
+     }
     
 }

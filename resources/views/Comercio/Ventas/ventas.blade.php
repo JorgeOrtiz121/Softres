@@ -151,7 +151,7 @@ th{
 
 </style>
 <!--Esto es el formulario del cliente-->
-<form  class="cbp-mc-form"  >
+<form  id="miFormulario" class="cbp-mc-form"  method="POST" action="{{route('generarpdf.pdf')}}">
     @csrf
     <div class="cbp-mc-column">
     <label for="cedula">Cedula/RUC </label>
@@ -219,9 +219,7 @@ th{
         <option>Hybrid</option>
      </select>
     </div>
-    {{-- <div class="cbp-mc-submit-wrap"><input class="cbp-mc-submit" type="submit" 
-    value="Send your data" /></div> --}}
-
+    
 <table class="table-primary" id="miTabla">
     <thead class="tprimaryhead">
         <tr class="col-table-primary">
@@ -243,11 +241,11 @@ th{
             <td id="numserie" scope="row"></td>
             <td id="codart" scope="row"></td>
             <td id="nombrecod" scope="row"><input class="articuloInput" id="articuloInput" type="text" name="articuloInput"><div class="product_list" id="product_list"></div></td>
-            <td id="cantidad" scope="row"><input type="number"></td>
+            <td id="cantidad" scope="row"><input type="number" value="1" name="cantidad"></td>
             <td id="caja" scope="row"></td>
             <td id="punit" scope="row"></td>
-            <td id="descu" scope="row"></td>
-            <td id="iva" scope="row"></td>
+            <td id="descu" scope="row"><input type="text" class="eldescuento" id="eldescuento" name="eldescuento" ></td>
+            <td id="iva" scope="row"><input type="checkbox" name="iva" id="iva" ></td>
             <td id="total" scope="row"></td>
             <td id="stock" scope="row"></td>
             <td>
@@ -271,14 +269,17 @@ th{
 <div class="cbp-mc-column">
     <label for="tipdoc">Tipo Documento</label>
     <select name="tipdoc" id="tipdoc">
-        <option value="">Factura</option>
+        <option value="factura-pro">Factura</option>
+        <option value="factura-pro">Proforma</option>
     </select>
     <label for="numdoc">Numero de Documento</label>
     <select name="numdoc" id="numdoc">
-        <option value="">001-004</option>
+        @foreach($emision as $emi)
+        <option value="{{$emi->emision}}">{{$emi->emision}}</option>
+        @endforeach
     </select>
     <label for="autoriza">Autoriza SRI:</label>
-    <input type="text" >
+    <input type="text" class="autoriza" id="autoriza">
 </div>
 <div class="cbp-mc-column">
     <label for="totalcobrar">Total a Cobrar</label>
@@ -291,6 +292,9 @@ th{
 <!--Esto es el Modal-->
   <!-- Modal -->
   @include('Comercio.Ventas.modalclientes')
+  <div class="cbp-mc-submit-wrap"><input class="cbp-mc-submit" type="submit" 
+    value="Send your data" /></div>
+
     </form>
 <!--Datos de Tabla-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -316,6 +320,9 @@ th{
                             $('#nombre').val(response.nombre);
                             $('#email').val(response.email);
                             $('#direccion').val(response.direccion);
+                            $('#desc').val(response.favor);
+                            $('#ptos').val(response.puntos);
+                            $('#deuda').val(response.deuda);
                         } else {
                             var confirmar = confirm('No se encontraron datos para esta cédula. ¿Desea redirigir a la seccion de clientes para su registro?');
                             if (confirmar) {
@@ -467,7 +474,7 @@ $(document).ready(function() {
                 filaActual.find('#numserie').text(response.id);
                 filaActual.find('#codart').text(response.codigo);
                 filaActual.find('#punit').text(response.precio_compra_sin_iva);
-                filaActual.find('#total').text(response.id_iva);
+                filaActual.find('#total').text(response.precio_compra_sin_iva);//antes estaba con id_iva
                 filaActual.find('#stock').text(response.stock_actual);
 
                 // Crear una nueva fila al final de la tabla
@@ -550,5 +557,147 @@ $(document).ready(function() {
             $('#totalCobrar').val(totalSuma.toFixed(2));
         }
     });
+</script>
+
+<script>
+    $(document).ready(function () {
+                $('#numdoc').change(function() {
+                    var valorSeleccionadodoc = $(this).val();
+                        $.ajax({
+                        url: '/obtenerautorizacion', // Reemplaza esto con la URL de tu controlador
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            numdoc: valorSeleccionadodoc
+                        },
+                        success: function (response) {
+                            $('#autoriza').val(response.opciones);
+                        },
+                        error: function () {
+                            // Manejo de errores si es necesario
+                        }
+                    });
+                    
+                });
+            });
+</script>
+<script>
+    $(document).ready(function () {
+        // Manejar el evento de cambio en el campo de descuento
+        $('.eldescuento').on('input', function () {
+            calcularDescuento($(this));
+            actualizarTotalCobrar();
+        });
+
+        // Manejar el evento de cambio en el campo de cantidad
+        $('input[name="cantidad"]').on('input', function () {
+            calcularDescuento($(this).closest('tr').find('.eldescuento'));
+            actualizarTotalCobrar();
+        });
+
+        // Función para calcular el descuento y actualizar el total
+        function calcularDescuento(descuentoInput) {
+            // Obtener el valor del descuento desde el campo de entrada
+            var descuentoValor = descuentoInput.val();
+
+            // Obtener la cantidad desde el campo correspondiente a la misma fila
+            var cantidad = parseFloat(descuentoInput.closest('tr').find('input[name="cantidad"]').val());
+
+            // Obtener el precio unitario desde el campo correspondiente a la misma fila
+            var precioUnitario = parseFloat(descuentoInput.closest('tr').find('#punit').text());
+
+            // Calcular el precio total antes del descuento
+            var precioTotal = cantidad * precioUnitario;
+
+            // Verificar si el descuento tiene un signo de porcentaje
+            if (descuentoValor.includes('%')) {
+                // Descuento con porcentaje
+                var porcentajeDescuento = parseFloat(descuentoValor) / 100;
+                var descuentoCalculado = precioTotal * porcentajeDescuento;
+            } else {
+                // Descuento sin porcentaje
+                var descuentoCalculado = parseFloat(descuentoValor);
+            }
+
+            // Calcular el nuevo precio total después del descuento
+            var nuevoPrecioTotal = precioTotal - descuentoCalculado;
+
+            // Actualizar el campo de total con el nuevo valor
+            descuentoInput.closest('tr').find('#total').text('$ ' + nuevoPrecioTotal.toFixed(2));
+        }
+
+        // Función para actualizar el valor total en el input totalCobrar
+        function actualizarTotalCobrar() {
+            var totalCobrar = 0;
+
+            // Sumar todos los valores totales en la tabla
+            $('.eldescuento').each(function () {
+                totalCobrar += parseFloat($(this).closest('tr').find('#total').text().replace('$ ', ''));
+            });
+
+            // Actualizar el valor en el input totalCobrar
+            $('#totalCobrar').val('$ ' + totalCobrar.toFixed(2));
+        }
+    });
+</script>
+
+<script>
+ document.getElementById('miFormulario').addEventListener('submit', function (event) {
+    // Evitar que el formulario se envíe automáticamente
+    event.preventDefault();
+
+    // Recopilar los datos
+    var datosTablaDinamica = [];
+    var filas = document.querySelectorAll('.fila-ejemplo');
+
+    filas.forEach(function(fila) {
+        var nuevaFila = {
+            numSerie: fila.querySelector('#numserie').innerText,
+            codArt: fila.querySelector('#codart').innerText,
+            nombreCod: fila.querySelector('.articuloInput').value,
+            cantidad: fila.querySelector('[name="cantidad"]').value,
+            caja: fila.querySelector('#caja').innerText,
+            precioUnitario: fila.querySelector('#punit').innerText,
+            descuento: fila.querySelector('[name="eldescuento"]').value,
+            iva: fila.querySelector('[name="iva"]').checked,
+            total: fila.querySelector('#total').innerText,
+            stock: fila.querySelector('#stock').innerText
+        };
+
+        datosTablaDinamica.push(nuevaFila);
+    });
+
+
+    var datosAdicionales = {
+        cedula: document.getElementById('cedula').value,
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        direccion: document.getElementById('direccion').value,
+        descuento: document.getElementById('desc').value,
+        ptosAcumulados: document.getElementById('ptos').value,
+        deuda: document.getElementById('deuda').value
+    };
+
+
+    // Añade los datos como un campo oculto al formulario
+    var datosInput = document.createElement('input');
+    datosInput.setAttribute('type', 'hidden');
+    datosInput.setAttribute('name', 'datos');
+    datosInput.setAttribute('value', JSON.stringify(datosTablaDinamica));
+    
+    // Adjunta el campo oculto al formulario
+    document.getElementById('miFormulario').appendChild(datosInput);
+
+
+    var datosAdicionalesInput = document.createElement('input');
+    datosAdicionalesInput.setAttribute('type', 'hidden');
+    datosAdicionalesInput.setAttribute('name', 'datosAdicionales');
+    datosAdicionalesInput.setAttribute('value', JSON.stringify(datosAdicionales));
+    document.getElementById('miFormulario').appendChild(datosAdicionalesInput);
+    // Envía el formulario
+    this.submit();
+});
+
+
 </script>
 @endsection()
