@@ -241,11 +241,11 @@ th{
             <td id="numserie" scope="row"></td>
             <td id="codart" scope="row"></td>
             <td id="nombrecod" scope="row"><input class="articuloInput" id="articuloInput" type="text" name="articuloInput"><div class="product_list" id="product_list"></div></td>
-            <td id="cantidad" scope="row"><input type="number" value="1" name="cantidad"></td>
+            <td id="cantidad" scope="row"><input type="number" value="0" name="cantidad"></td>
             <td id="caja" scope="row"></td>
             <td id="punit" scope="row"></td>
             <td id="descu" scope="row"><input type="text" class="eldescuento" id="eldescuento" name="eldescuento" ></td>
-            <td id="iva" scope="row"><input type="checkbox" name="iva" id="iva" ></td>
+            <td id="iva" scope="row"><input type="checkbox" name="iva" id="iva" class="iva" ></td>
             <td id="total" scope="row"></td>
             <td id="stock" scope="row"></td>
             <td>
@@ -289,11 +289,25 @@ th{
     <label for="valice">Valor ICE</label>
     <input type="text" readonly >
 </div>
+<div class="cbp-mc-column">
+    <label for="subtotal">Subtotal</label>
+   <input type="text" id="subtotal" readonly>
+    <label for="descuentodeltotal">Descuento</label>
+    <input type="descuentodeltotal" id="descuentodeltotal">
+    <label for="totaldescu">Total Descuento</label>
+    <input type="totaldescu" id="totaldescu" readonly >
+    <label for="iva0">Iva 0%</label>
+    <input type="iva0" id="iva0" readonly>
+    <label for="iva12">Iva 12%</label>
+    <input type="iva12" id="iva12" readonly >
+    <label for="totalco">Total</label>
+    <input type="totalco" id="totalco" readonly >
+</div>
 <!--Esto es el Modal-->
   <!-- Modal -->
   @include('Comercio.Ventas.modalclientes')
   <div class="cbp-mc-submit-wrap"><input class="cbp-mc-submit" type="submit" 
-    value="Send your data" /></div>
+    target="_blank" rel="noopener" value="Send your data" /></div>
 
     </form>
 <!--Datos de Tabla-->
@@ -416,18 +430,14 @@ th{
 
    <script>
 $(document).ready(function() {
-
+    // Evento keydown para el input de artículo
     $('#miTabla').on('keydown', '.articuloInput', function(e) {
-        // Si se presiona "Enter", prevenir el comportamiento predeterminado
         if (e.keyCode === 13) {
             e.preventDefault();
-
-            // Puedes agregar aquí la lógica que deseas realizar al presionar "Enter" en el input
-            // Por ejemplo, puedes enfocar el siguiente input, hacer una acción específica, etc.
         }
     });
 
-
+    // Evento keyup para el input de artículo
     $('#miTabla').on('keyup', '.articuloInput', function() {
         var tablainput = $(this).val();
         var product_list = $(this).siblings('.product_list');
@@ -441,6 +451,8 @@ $(document).ready(function() {
             },
             success: function(data) {
                 product_list.html(data);
+                actualizarTotales();
+
             },
             error: function() {
                 // Manejar errores si es necesario
@@ -448,13 +460,13 @@ $(document).ready(function() {
         });
     });
 
-
+    // Evento click para eliminar fila
     $('#miTabla').on('click', '.eliminar-fila', function() {
-        // Elimina la fila actual cuando se hace clic en el botón "Eliminar"
         $(this).closest('tr').remove();
+        actualizarTotales();
     });
 
-
+    // Evento click para seleccionar artículo
     $('#miTabla').on('click', 'li', function() {
         var value = $(this).text();
         var input = $(this).closest('tr').find('.articuloInput');
@@ -473,26 +485,131 @@ $(document).ready(function() {
                 var filaActual = input.closest('tr');
                 filaActual.find('#numserie').text(response.id);
                 filaActual.find('#codart').text(response.codigo);
-                filaActual.find('#punit').text(response.precio_compra_sin_iva);
-                filaActual.find('#total').text(response.precio_compra_sin_iva);//antes estaba con id_iva
                 filaActual.find('#stock').text(response.stock_actual);
 
+                // Manejar el evento de clic del checkbox
+                filaActual.find('.iva').off('click');
+                filaActual.find('.iva').click(function() {
+                    actualizarPrecio(filaActual, response);
+                });
+                actualizarPrecio(filaActual, response);
+
                 // Crear una nueva fila al final de la tabla
-                var newRow = filaActual.clone(true); // Clonar la fila actual y sus eventos
-                newRow.find('#articuloInput').val(''); // Limpiar el input del nuevo artículo
-                newRow.find('#numserie').text(''); // Limpiar los datos de la nueva fila
+                var newRow = filaActual.clone(true);
+                newRow.find('#articuloInput').val('');
+                newRow.find('#numserie').text('');
                 newRow.find('#codart').text('');
                 newRow.find('#punit').text('');
                 newRow.find('#total').text('');
                 newRow.find('#stock').text('');
-                $('#miTabla tbody').append(newRow); // Agregar la nueva fila a la tabla
+                newRow.find('.iva').prop('checked', false);
+                $('#miTabla tbody').append(newRow);
+
+                // Actualizar totales al agregar nueva fila
+                actualizarTotales();
             },
             error: function(error) {
                 // Manejar errores si es necesario
             }
         });
     });
+
+    // Evento input para el campo de cantidad
+    $('#miTabla').on('input', 'input[type="number"]', function() {
+        actualizarTotales();
+    });
+    $('#miTabla').on('change', '.iva', function() {
+        var fila = $(this).closest('tr');
+        actualizarTotales(fila);
+    });
+
+    // Actualizar totales al agregar nueva fila o cambiar cantidad
+    $('#miTabla').on('input', 'input[type="number"]', function () {
+        actualizarTotalesDetallados();
+    });
+    // Actualizar totales al cambiar el estado del checkbox de IVA
+    $('#miTabla').on('change', '.iva', function () {
+        var fila = $(this).closest('tr');
+        actualizarTotalesDetallados(fila);
+    });
+ $('#miTabla').on('input', '.eldescuento', function() {
+        actualizarTotales();
+    });
+
+    // Función para actualizar dinámicamente la etiqueta de "Total" y el campo "Total a Cobrar"
+    function actualizarTotales() {
+        var totalSuma = 0;
+    var descuentoTotal = 0;
+
+    $('#miTabla tbody tr').each(function () {
+        var cantidad = parseFloat($(this).find('#cantidad input').val()) || 0;
+        var punit = parseFloat($(this).find('#punit').text()) || 0;
+        var descuento = obtenerDescuento($(this)); // Obtener el descuento
+        var total = calcularTotalConDescuento(cantidad, punit, descuento);
+        $(this).find('#total').text(total.toFixed(2));
+        totalSuma += total;
+        descuentoTotal += (cantidad * punit) - total;
+        });
+
+        // Muestra la suma en el input con id 'totalCobrar'
+        $('#totalCobrar').val(totalSuma.toFixed(2));
+
+// Mostrar el descuento total en el input con id 'totaldescu'
+$('#totaldescu').val(descuentoTotal.toFixed(2));
+
+// Calcular y mostrar el IVA del 12% en el input con id 'iva12'
+var iva12 = totalSuma * 0.12;
+$('#iva12').val(iva12.toFixed(2));
+$('#subtotal').val((totalSuma - iva12).toFixed(2));
+
+// Calcular y mostrar el IVA del 0% en el input con id 'iva0'
+var iva0 = totalSuma - iva12;
+$('#iva0').val(iva0.toFixed(2));
+
+// Mostrar el total en el input con id 'totalco'
+$('#totalco').val(totalSuma.toFixed(2));
+    }
+
+    function obtenerDescuento(fila) {
+        var descuentoInput = fila.find('.eldescuento');
+        var descuentoValor = parseFloat(descuentoInput.val()) || 0;
+
+        // Si el valor tiene '%' al final, conviértelo a porcentaje
+        if (descuentoInput.val().includes('%')) {
+            descuentoValor = descuentoValor / 100;
+        }
+
+        return descuentoValor;
+    }
+ function calcularTotalConDescuento(cantidad, precioUnitario, descuento) {
+    var subtotal = cantidad * precioUnitario;
+
+    // Verificar si el descuento es un porcentaje y aplicarlo
+    if (descuento > 0 && descuento < 1) {
+        subtotal *= (1 - descuento); // Descuento en porcentaje
+    } else if (descuento >= 1) {
+        subtotal -= descuento; // Descuento en valor absoluto
+    }
+
+    return subtotal;
+    }
+
+    // Función para actualizar el precio según la selección del checkbox de IVA
+    function actualizarPrecio(fila, response) {
+        var isChecked = fila.find('.iva').is(':checked');
+        if (isChecked) {
+            fila.find('#punit').text(response.precio_compra_con_iva);
+            fila.find('#total').text(response.precio_compra_con_iva);
+        } else {
+            fila.find('#punit').text(response.precio_compra_sin_iva);
+            fila.find('#total').text(response.precio_compra_sin_iva);
+        }
+
+        // Actualizar totales al cambiar el precio
+        actualizarTotales();
+    }
 });
+
    </script>
 
   
@@ -533,32 +650,6 @@ $(document).ready(function() {
     });
 
    </script>
-
-<script>
-    $(document).ready(function() {
-        // Escucha el evento 'input' en los inputs de cantidad
-        $('#miTabla').on('input', 'input[type="number"]', function() {
-            // Actualiza dinámicamente la etiqueta de "Total" y el campo "Total a Cobrar"
-            actualizarTotales();
-        });
-
-        // Función para actualizar dinámicamente la etiqueta de "Total" y el campo "Total a Cobrar"
-        function actualizarTotales() {
-            var totalSuma = 0;
-            $('#miTabla tbody tr').each(function() {
-                var cantidad = parseFloat($(this).find('#cantidad input').val()) || 0;
-                var punit = parseFloat($(this).find('#punit').text()) || 0;
-                var total = cantidad * punit;
-                $(this).find('#total').text(total.toFixed(2));
-                totalSuma += total;
-            });
-
-            // Muestra la suma en el input con id 'totalCobrar'
-            $('#totalCobrar').val(totalSuma.toFixed(2));
-        }
-    });
-</script>
-
 <script>
     $(document).ready(function () {
                 $('#numdoc').change(function() {
@@ -581,65 +672,7 @@ $(document).ready(function() {
                 });
             });
 </script>
-<script>
-    $(document).ready(function () {
-        // Manejar el evento de cambio en el campo de descuento
-        $('.eldescuento').on('input', function () {
-            calcularDescuento($(this));
-            actualizarTotalCobrar();
-        });
 
-        // Manejar el evento de cambio en el campo de cantidad
-        $('input[name="cantidad"]').on('input', function () {
-            calcularDescuento($(this).closest('tr').find('.eldescuento'));
-            actualizarTotalCobrar();
-        });
-
-        // Función para calcular el descuento y actualizar el total
-        function calcularDescuento(descuentoInput) {
-            // Obtener el valor del descuento desde el campo de entrada
-            var descuentoValor = descuentoInput.val();
-
-            // Obtener la cantidad desde el campo correspondiente a la misma fila
-            var cantidad = parseFloat(descuentoInput.closest('tr').find('input[name="cantidad"]').val());
-
-            // Obtener el precio unitario desde el campo correspondiente a la misma fila
-            var precioUnitario = parseFloat(descuentoInput.closest('tr').find('#punit').text());
-
-            // Calcular el precio total antes del descuento
-            var precioTotal = cantidad * precioUnitario;
-
-            // Verificar si el descuento tiene un signo de porcentaje
-            if (descuentoValor.includes('%')) {
-                // Descuento con porcentaje
-                var porcentajeDescuento = parseFloat(descuentoValor) / 100;
-                var descuentoCalculado = precioTotal * porcentajeDescuento;
-            } else {
-                // Descuento sin porcentaje
-                var descuentoCalculado = parseFloat(descuentoValor);
-            }
-
-            // Calcular el nuevo precio total después del descuento
-            var nuevoPrecioTotal = precioTotal - descuentoCalculado;
-
-            // Actualizar el campo de total con el nuevo valor
-            descuentoInput.closest('tr').find('#total').text('$ ' + nuevoPrecioTotal.toFixed(2));
-        }
-
-        // Función para actualizar el valor total en el input totalCobrar
-        function actualizarTotalCobrar() {
-            var totalCobrar = 0;
-
-            // Sumar todos los valores totales en la tabla
-            $('.eldescuento').each(function () {
-                totalCobrar += parseFloat($(this).closest('tr').find('#total').text().replace('$ ', ''));
-            });
-
-            // Actualizar el valor en el input totalCobrar
-            $('#totalCobrar').val('$ ' + totalCobrar.toFixed(2));
-        }
-    });
-</script>
 
 <script>
  document.getElementById('miFormulario').addEventListener('submit', function (event) {
@@ -700,4 +733,6 @@ $(document).ready(function() {
 
 
 </script>
+
+
 @endsection()

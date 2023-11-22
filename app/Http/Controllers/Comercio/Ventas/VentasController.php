@@ -9,16 +9,21 @@ use App\Models\Dashboard\Empresas as DashboardEmpresas;
 use App\Models\Dashboard\UsuariosEmpresas;
 use App\Models\Empresas\Articulos;
 use App\Models\Empresas\Clientes;
+use App\Notifications\Enviarpdf;
 use App\OpcionPago;
 use App\PuntosE;
 use App\TarjetaPago;
+use App\VentasGeneradas;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Facade\FlareClient\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\File;use Facade\FlareClient\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use PDO;
 
 class VentasController extends Controller
@@ -95,7 +100,7 @@ class VentasController extends Controller
                 'codigo' => $tabladato->codigo,
                 'precio_compra_sin_iva' => $tabladato->precio_compra_sin_iva,
                 'id_iva'=> $tabladato->tipo_iva->pluck('porcentaje'),
-                'precio_compra_sin_iva'=>$tabladato->precio_compra_sin_iva,
+                'precio_compra_con_iva' => $tabladato->precio_compra_con_iva,
                 'stock_actual'=>$tabladato->stock_actual,
             
             ]);
@@ -235,17 +240,57 @@ class VentasController extends Controller
 
      }
 
-
-     public function generarPDF(Request $request){
-        $datosTablaDinamica = json_decode($request->input('datos'), true);
-        $datosTablaDinamica2 = json_decode($request->input('datosAdicionales'), true);
-        Log::info('Pase por ahi: form ' .json_encode($datosTablaDinamica));
-        Log::info('Pase por ahi: form1 ' .json_encode($datosTablaDinamica2));
-        $data=Clientes::all();
-        $numeroAcc='25515111111561515116511111';
-        $pdf = Pdf::loadView('Comercio.Ventas.subcliente_table', compact('data','numeroAcc'));
-        return $pdf->stream();
-        //  return $pdf->download('invoice.pdf');
+     public function generarPDF(Request $request)
+     {
+         $datosTablaDinamica = json_decode($request->input('datos'), true);
+         $datosTablaDinamica2 = json_decode($request->input('datosAdicionales'), true);
+     
+         Log::info('Pase por ahi: form ' . json_encode($datosTablaDinamica));
+         Log::info('Pase por ahi: form1 ' . json_encode($datosTablaDinamica2));
+     
+         $cedula = $datosTablaDinamica2['cedula'];
+         $nombre = $datosTablaDinamica2['nombre'];
+         $email = $datosTablaDinamica2['email'];
+         $direccion = $datosTablaDinamica2['direccion'];     
+         // Asegúrate de que el cliente exista antes de intentar acceder a sus propiedades
+         $ciudadcli = Clientes::with('ciudades', 'provincias')->where('documento', '=', $cedula)->first();
+     
+         if (!$ciudadcli) {
+             // Manejar el caso en que el cliente no existe
+             Log::error('Cliente no encontrado para cédula ' . $cedula);
+             // Puedes devolver una respuesta o lanzar una excepción según tus necesidades
+             return response()->json(['error' => 'Cliente no encontrado'], 404);
+         }
+         $ciudad = $ciudadcli->ciudades->nombre_ciudad;
+         $provinciaDelCliente = $ciudadcli->provincias->nombre_provincia;
+         $numeroAcc = '25515111111561515116511111';
+         // Generar PDF
+         $pdf = Pdf::loadView('Comercio.Ventas.subcliente_table', compact('cedula', 'nombre', 'email', 'numeroAcc', 'ciudad', 'provinciaDelCliente')); 
+         $messageData = [
+            'greeting' => 'Hola usuario',  
+            'usuario'=>$nombre// Puedes agregar más datos aquí según lo que necesites en tu vista de correo
+        ];
+            Mail::send('Comercio.Ventas.correoventas', $messageData, function ($mail) use ($pdf) {
+            $mail->from('ortizjorge319@gmail.com', 'John Doe');
+            $mail->to('dianadanielog@gmail.com');
+            $mail->attachData($pdf->output(), 'test.pdf');
+        }); 
+        VentasGeneradas::create([
+            'cliente'=>$nombre,
+            'tipodoc'=>$cedula,
+            'subtotal'=>12,
+            'iva'=>12,
+            'total'=>25.25,
+            'estado'=>"Enviado PDF a su Correo"
+        ]);
+        
+         return $pdf->stream('FacturaFisica.pdf');
+        
+     }
+     
+     public function ventasgeneradas(){
+        $ventasgeneradas = VentasGeneradas::all();
+        return view('Comercio.Ventas.ventasgeneradas',compact('ventasgeneradas'));
      }
     
 }

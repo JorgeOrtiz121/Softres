@@ -139,6 +139,7 @@ Route::post('/obtener-datosde-tabla', [VentasController::class,'obtenertabla'])-
 Route::get('/obtenerdatosposibles', [VentasController::class,'datosposibles'])->name('datosposibles');
 Route::post('/obtenerautorizacion', [VentasController::class,'autoridadSRI'])->name('autoridadsri');
 Route::post('/obtenerpdftabla', [VentasController::class,'generarPDF'])->name('generarpdf.pdf');
+Route::get('/comercio/ventas/generadas/Ventas', [VentasController::class,'ventasgeneradas'])->name('generadas.ventas');
 
 
 

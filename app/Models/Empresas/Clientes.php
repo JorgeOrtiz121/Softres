@@ -72,6 +72,9 @@ class Clientes extends Model
     public function ciudades(){
         return $this->setConnection('mysql')->belongsTo('App\Models\Dashboard\Ciudades','id_ciudad');
     }
+    public function provincias(){
+        return $this->setConnection('mysql')->belongsTo('App\Models\Dashboard\Provincias','id_provincia');
+    }
 
     public function paises(){
         return $this->setConnection('mysql')->belongsTo('App\Models\Dashboard\Paises','id_pais');

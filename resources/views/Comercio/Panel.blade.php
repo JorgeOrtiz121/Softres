@@ -91,7 +91,12 @@
                               <li class="current-page"><a href="{{asset('comercio/clientes')}}">Administración de clientes</a></li>
                             </ul>
                         </li>
-                        <li class=""><a href="{{asset('comercio/ventas/visualizacion/panelprincipal')}}"><i class="fa fa-folder"></i> Ventas </a></li>
+                        <li class=""><a><i class="fa fa-truck"></i> Seccion Ventas <span class="fa fa-chevron-down"></span></a>
+                          <ul class="nav child_menu">
+                            <li class="current-page"><a href="{{asset('/comercio/ventas/generadas/Ventas')}}">Ventas Generadas</a></li>
+                            <li class="current-page"><a href="{{asset('comercio/ventas/visualizacion/panelprincipal')}}">Ventas</a></li>
+                          </ul>
+                      </li>
                         <li class=""><a href="#"><i class="fa fa-search"></i> Consultas </a></li>
                         <li class=""><a href="#"><i class="fa fa-bar-chart"></i> Reportes </a></li>
                         <li class=""><a href="#"><i class="fa fa-pie-chart"></i> Contabilidad </a></li>

@@ -27,7 +27,7 @@
     <div class="row">
         <div class="col-xs-10">
             <h1 class="h6">RUC</h1>
-            <p class="h6">1850153600</p>
+            <p class="h6">18501536002542424224</p>
         </div>
         <div class="col-xs-2 text-center">
             <strong>Fecha</strong><br>
@@ -48,14 +48,43 @@
     </div>
     <hr>
     <div class="row text-center" style="margin-bottom: 2rem;">
-        <div class="col-xs-6">
-            <h1 class="h2">Cliente</h1>
-            <strong><!-- Inserta el nombre del cliente aquí --></strong>
-        </div>
-        <div class="col-xs-6">
-            <h1 class="h2">Remitente</h1>
-            <strong><!-- Inserta el nombre del remitente aquí --></strong>
-        </div>
+        <table>
+            <tr>
+                <tbody>
+                    <tr >   
+                        <td scope= "row" >
+                            <p>RAZON SOCIAL: {{$nombre}}</p>
+                        </td>
+                   </tr>
+                   <tr >
+                    <td scope= "row">
+                        <p> IDENTIFICACION: {{$cedula}}</p>
+                    </td>
+                    <td>
+                        <p>FECHA DE EMISION: 2023-05-12</p>
+                    </td>
+                   </tr>
+                   <tr >
+                    <td scope= "row">
+                        <p>CORREO: {{$email}}</p>
+                    </td> 
+                   </tr>
+                   <tr>
+                    <td>
+                      <p>DIRECCION: {{$provinciaDelCliente}}</p>
+                    </td>
+                    <td>
+                    <p>CIUDAD: {{$ciudad}}</p>
+                    </td>
+                    <td>
+                     <p>TELEFONO: {{}}</p>
+                    </td>
+                   </tr>
+                </tbody>
+            </tr>
+            
+        </table>
+      
     </div>
     <div class="row">
         <div class="col-xs-6">
