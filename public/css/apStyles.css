@@ -1,0 +1,36 @@
+.form-control{
+    text-transform: uppercase;
+}
+
+.letranormal{
+    text-transform: initial;
+}
+
+/* Indica si el campo input no es valido, se muestra una sombra roja alredor y un background rojo tenue */
+input:required:invalid, input:focus:invalid {
+    background: #fbf5f7 !important;
+    padding: 10px !important;
+    border-radius: 0 !important;
+    position: relative;
+    display: inline-block !important;
+    box-shadow: 0.1px 0px 0px 1px #fd0707;
+}
+
+.small-box {
+    cursor: pointer;
+}
+
+.fc-sat{
+    background: #e8f4ff !important;
+    font-weight: bold !important;
+}
+
+.fc-sun{
+    background: #e8f4ff !important;
+    font-weight: bold !important;
+}
+
+/* estilo select2 activo */
+.select2-selection:focus {
+    border: 1px solid #4670ca;
+}
