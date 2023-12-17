@@ -17,6 +17,9 @@
     max-width: 45%; /* Ajusta el porcentaje según tus necesidades */
     margin: 0 auto; /* Centra el modal horizontalmente */
 }
+ #thmodal th{
+  color: #da1b24;
+ }
 
 </style>
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -34,9 +37,13 @@
           </div>
           <table class="table table-bordered table-hover " id="subclienteTableContainer">
             <thead>
-              <tr>ID</tr>
-              <tr>User Name</tr>
-              <tr>Email</tr>
+              <tr id="thmodal">
+                <th scope="col">ID Subcliente</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Email</th>
+                <th scope="col">Accion</th>
+              </tr>
+             
             </thead>
             <tbody id="searcli">
               
@@ -45,7 +52,6 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Agregar Subcliente</button>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@
     }
     .table-primary th,
     .table-primary td{
-        padding: 25px 15px;
+        padding: 20px 15px;
         border: #f2f4f5 4px solid;
 
     }
@@ -71,7 +71,8 @@ background: transparent;
 
 .cbp-mc-form input,
 .cbp-mc-form textarea {
-border: 3px solid #0A274E;
+border: 2px solid #0A274E;
+border-radius: 25px;
 }
 
 .cbp-mc-form textarea {
@@ -283,6 +284,7 @@ input[type="date"]{
     cursor: pointer;
     border-radius: 3px;
 }
+
 </style>
 <!--Esto es el formulario del cliente-->
 <form  id="miFormulario" class="cbp-mc-form"  method="POST" action="{{route('generarpdf.pdf')}}">
@@ -343,7 +345,7 @@ input[type="date"]{
     <!--Este sera el formulario de informacion general-->
     <div class="cbp-mc-column">
     <label>Fecha</label>
-    <input type="date" name="fecha" id="fecha">
+    <input type="date" name="fecha" id="fecha" value="2023-12-20">
     <label for="drink">Numero de Caja</label>
     <input type="text" id="drink" name="drink" placeholder="Green Tea">
     <label for="power">Vendedor</label>
@@ -412,9 +414,9 @@ input[type="date"]{
 <div class="cbp-mc-column">
     <label for="subcliente">Subcliente</label>
     <input type="text" class="subcli" id="subcli" name="subcli" placeholder="Ingrese el subcliente" readonly>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <button style="margin-top: 10px;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
         Visualizar Subcliente
-      </button>
+    </button>
     <label for="comentario">Comentario</label>
     <textarea name="comentario" id="comentario" cols="30" rows="10">Ingrese su Comentario</textarea>
 </div>
@@ -427,15 +429,18 @@ input[type="date"]{
     <label for="numdoc">Numero de Documento</label>
     <select name="numdoc" id="numdoc">
         @foreach($emision as $emi)
-        <option value="{{$emi->emision}}">{{$emi->emision}}</option>
+        <option id="numemision" value="{{$emi->emision}}">{{$emi->emision}}</option>
         @endforeach
     </select>
     <label for="autoriza">Autoriza SRI:</label>
     <div class="input-container">
     <input type="text" class="autoriza" id="autoriza" readonly>
     <hr>
-    <input type="text" class="autoriza-id" id="autoriza-id">
+    <input type="text" class="autoriza-id" id="autoriza-id" value={{$lastId}} readonly>
     </div>
+    <button style="margin-top: -55px; margin-left:238px;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal1">
+        <i class="fa-solid fa-gear fa-fade" style="color: #e0ef15;"></i>
+    </button>
 </div>
 <div class="flex-container">
 <div class="cbp-mc-column"  >
@@ -465,6 +470,7 @@ input[type="date"]{
 <!--Esto es el Modal-->
   <!-- Modal -->
   @include('Comercio.Ventas.modalclientes')
+  @include('Comercio.Ventas.contadorcomprobante')
   <div class="cbp-mc-submit-wrap"><input class="cbp-mc-submit" type="submit" 
     target="_blank" rel="noopener" value="Send your data" /></div>
 
@@ -904,6 +910,28 @@ $(document).ready(function() {
     });
 
    </script>
+
+<script>
+    $('#btnActualizarAsignacion').on('click',function(){
+        var numeroAsignacion = $('#asigid').val();
+        console.log(numeroAsignacion);
+            //alert(search_value);
+            $.ajax({
+                type:'GET',
+                url: '/comercio/ventas/asigid',
+                data: {'asigid': numeroAsignacion},
+                success:function(data){
+                    console.log("Se ha encontrado la asignación");
+                    $('#autoriza-id').val(data.nextId);
+
+                },
+                error: function(err){
+                    console.log('Error'+err);
+                }
+            });
+        });
+
+</script>
 <script>
     $(document).ready(function () {
                 $('#numdoc').change(function() {
@@ -949,7 +977,7 @@ $(document).ready(function() {
             iva: fila.querySelector('[name="iva"]').checked,
             total: fila.querySelector('#total').innerText,
             stock: fila.querySelector('#stock').innerText,
-            marca: fila.querySelector('#marca').innerText,
+            marca: fila.querySelector('#marca').innerText
 
         };
 
@@ -964,9 +992,39 @@ $(document).ready(function() {
         direccion: document.getElementById('direccion').value,
         descuento: document.getElementById('desc').value,
         ptosAcumulados: document.getElementById('ptos').value,
-        deuda: document.getElementById('deuda').value
+        deuda: document.getElementById('deuda').value,
+        autorizacion: document.getElementById('autoriza-id').value,
+        fechacompro:document.getElementById('fecha').value,
+        numemision:document.getElementById('numemision').value
     };
 
+
+
+    // Verificar stock solo si el tipo de venta es "factura"
+    var tipoVenta =  $('#tipdoc').val();
+    console.log("soy  factura");
+    if (tipoVenta == 'factura') {
+        var alertaSobrepasoStock = false;
+        datosTablaDinamica.forEach(function(fila) {
+            if (parseInt(fila.cantidad) > parseInt(fila.stock)) {
+                console.log("dice que me pase");
+                alertaSobrepasoStock = true;
+                return false; // Terminar el bucle si hay algún sobrepaso de stock
+            }
+        });
+
+        // Mostrar alerta si se detecta un sobrepaso de stock
+        if (alertaSobrepasoStock) {
+            alert('Uno o más artículos sobrepasan el stock disponible. Recuerda que realizas una Factura!');
+            return;
+        }
+    }
+
+    var nombre = document.getElementById('nombre').value;
+    if (nombre.trim() === '') {
+        alert('Por favor, ingrese un nombre antes de enviar el formulario.');
+        return;
+    }
 
     // Añade los datos como un campo oculto al formulario
     var datosInput = document.createElement('input');

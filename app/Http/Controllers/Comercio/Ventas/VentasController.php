@@ -150,7 +150,11 @@ class VentasController extends Controller
     {
         $model = FormasPago::all();
         $emision=PuntosE::all();
-        return view('Comercio.Ventas.ventas', compact('model','emision'));
+        $lastId = DB::table('ventas_generadas')->latest('id')->value('id') !== null
+    ? DB::table('ventas_generadas')->latest('id')->value('id')+1
+    : 1;
+
+        return view('Comercio.Ventas.ventas', compact('model','emision','lastId'));
 
     }
 
@@ -255,7 +259,25 @@ class VentasController extends Controller
          $cedula = $datosTablaDinamica2['cedula'];
          $nombre = $datosTablaDinamica2['nombre'];
          $email = $datosTablaDinamica2['email'];
-         $direccion = $datosTablaDinamica2['direccion'];     
+         $direccion = $datosTablaDinamica2['direccion']; 
+         $autorizaid=$datosTablaDinamica2['autorizacion'];  
+         $fechacompro=$datosTablaDinamica2['fechacompro'];
+         $numemision=$datosTablaDinamica2['numemision'];
+         $numemisionfin=str_replace('-','',$numemision);
+         $fechacomprofin=str_replace('-','',$fechacompro);
+         $tipcompro=strval(01);
+         $ruc=strval(1600392128001);
+         $produccion=strval(2);
+         $codignum=strval(12345678);
+         $eminormal=strval(1);
+         Log::info('esta es la clave de acceso ' .gettype($numemision));
+         Log::info('esta es la clave de acceso ' .gettype($tipcompro));
+         Log::info('esta es la clave de acceso ' .gettype($ruc));
+         Log::info('esta es la clave de acceso ' .gettype($produccion));
+         Log::info('esta es la clave de acceso ' .gettype($codignum));
+         Log::info('esta es la clave de acceso ' .gettype($eminormal));
+         Log::info('esta es la clave de acceso ' .gettype($fechacompro));
+         Log::info('esta es la clave de acceso ' .$fechacomprofin);
          // Asegúrate de que el cliente exista antes de intentar acceder a sus propiedades
          $ciudadcli = Clientes::with('ciudades', 'provincias')->where('documento', '=', $cedula)->first();
      
@@ -265,15 +287,27 @@ class VentasController extends Controller
              // Puedes devolver una respuesta o lanzar una excepción según tus necesidades
              return response()->json(['error' => 'Cliente no encontrado'], 404);
          }
+         $longitudDeseada = 9;  // Cambia esto según tus necesidades
+
+        // Formatear el número del comprobante con ceros a la izquierda
+        $numeroFormateado = str_pad($autorizaid, $longitudDeseada, '0', STR_PAD_LEFT);
+        Log::info("este el compobante ".$numeroFormateado);
          $ciudad = $ciudadcli->ciudades->nombre_ciudad;
          $provinciaDelCliente = $ciudadcli->provincias->nombre_provincia;
          $telcliente=$ciudadcli->telefono1;
-         $numero = '050320200717231252640012001002000001193050320001';
-         $numeroAcc=strval($this->claveAcceso($numero));
-         Log::info('Pase por ahi:xddd ' .$numeroAcc);
-         Log::info('Pase por ahi:tipoo ' .gettype($numeroAcc));
+        // $numero = '050320200717231252640012001002000001193050320001';
+        $numero = strrev($fechacomprofin) . $tipcompro . $ruc . $produccion . $numemisionfin . $numeroFormateado . $eminormal;
+        $numeroAcc1=strval($this->claveAcceso($numero));
+        $numeroAcc=$numero . $numeroAcc1;
+         Log::info('esta es la clave de acceso ' .$numero);
+         Log::info('digito verificador ' .$numeroAcc);
+         Log::info('Pase por ahi:tipoo ' .gettype($numeroAcc1));
          // Generar PDF
-         $pdf = Pdf::loadView('Comercio.Ventas.subcliente_table', compact('cedula', 'nombre', 'email', 'numeroAcc', 'ciudad', 'provinciaDelCliente','datosTablaDinamica')); 
+         $dimensionaux=array(
+         'paper' => 'a4',
+         
+         );
+         $pdf = Pdf::loadView('Comercio.Ventas.subcliente_table', compact('cedula', 'nombre', 'email', 'numeroAcc', 'ciudad', 'provinciaDelCliente','datosTablaDinamica'),$dimensionaux); 
          $pdfaux=Pdf::loadView('Comercio.Ventas.subcliente_tableAux', compact('cedula', 'nombre', 'email', 'numeroAcc', 'ciudad', 'provinciaDelCliente','datosTablaDinamica','direccion','telcliente')); 
     //      $content = $pdf->download()->getOriginalContent();
     //      // Almacena temporalmente el PDF en una ruta pública
@@ -328,9 +362,9 @@ class VentasController extends Controller
             'estado'=>"Enviado PDF a su Correo"
         ]);
         
-         return $pdf->stream('FacturaFisica.pdf');
+        // return $pdf->stream('FacturaFisica.pdf');
          //return response()->download($zipFileName)->deleteFileAfterSend(true);
-         //return redirect('comercio/inventario/articulos');
+         return redirect('comercio/inventario/articulos');
 
         
      }
@@ -371,5 +405,13 @@ class VentasController extends Controller
 	  return $dv;
 	}
      
-    
+    public function contadorfactura(Request $request) {
+        //$nextId = DB::table('ventas_generadas')->latest('id')->first()->id;
+        $id = $request->input('asigid');
+        Log::info("Se incremente al numero" .$id);
+        DB::statement("ALTER TABLE ventas_generadas AUTO_INCREMENT = $id");
+        Log::info("Se incremente al numero" .$id);
+        return response()->json(['message' => 'Asignación actualizada correctamente', 'nextId' => $id]);
+
+    }
 }
