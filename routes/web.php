@@ -128,13 +128,17 @@ Route::post('dashboard/tipos/', 'DashboardController@AdminServidorMail');
 // ###### Fin Iventarios ######
 //--------Ventas----------------//
        
-Route::get('comercio/ventas/visualizacion/panelprincipal',[VentasController::class,'index'] )->name('presentacion_ventas');
-Route::get('comercio/ventas/crear/panelprincipal',[VentasController::class,'store'] )->name('store.ventas');
+Route::get('/comercio/ventas/visualizacion/panelprincipal',[VentasController::class,'index'] )->name('presentacion_ventas');
+// Route::post('comercio/ventas/crear/panelprincipal',[VentasController::class,'store'] )->name('store.ventas');
+Route::get('/search',[VentasController::class,'search'])->name('search');
 Route::post('/obtener-datos-cliente', [VentasController::class,'obtenerDatosCliente']);
-Route::get('comercio/ventas/visualizacion/panelprincipal', [VentasController::class,'show'])->name('show.pagos');
+Route::get('/comercio/ventas/visualizacion/panelprincipal', [VentasController::class,'show'])->name('show.pagos');
 Route::post('/obtener-valor-seleccionado', [VentasController::class,'obtenerValorSeleccionado'])->name('obtener.pagos');
 Route::post('/obtener-tipo-tarjeta', [VentasController::class,'tipotarjeta'])->name('obtener.tarjetas');
 Route::post('/obtener-datosde-tabla', [VentasController::class,'obtenertabla'])->name('autocomplete');
+Route::get('/obtenerdatosposibles', [VentasController::class,'datosposibles'])->name('datosposibles');
+
+
 
 
 
