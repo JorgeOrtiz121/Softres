@@ -146,6 +146,7 @@ Route::post('/obtenerpdftabla', [VentasController::class,'generarPDF'])->name('g
 Route::get('/comercio/ventas/generadas/Ventas', [VentasController::class,'ventasgeneradas'])->name('generadas.ventas');
 Route::get('/comercio/ventas/asigid', [VentasController::class,'contadorfactura'])->name('contafact.ventas');
 
+Route::get('/comercio/ventas/asigidddd', [VentasController::class,'contadorfactura'])->name('contafact.ventas');
 
 
 
