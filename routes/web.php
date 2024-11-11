@@ -44,7 +44,7 @@ Route::get('/', function () {
 Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
 
-// DASHBOARD
+// DASHBOARD2
 // - Empresas
 Route::get('empresas', 'EmpresasController@index')->name('empresas');
 Route::get('empresas/listado', 'EmpresasController@index')->name('GetEmpresas');
